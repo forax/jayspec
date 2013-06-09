@@ -10,6 +10,9 @@ and write unit tests to the code. I want library which is designed in the opposi
 I want to first write tests and use them as a specification to write code. Note that this idea is far from new,
 it's basically a rip of Ruby's RSpec in Java.
 
+JaySpec
+-------
+
 So let me introduce JaySpec, which allows to describe executable tests that can be used as specification.
 In language like Scala or Groovy, the parser is enough flexible to be able to parse that text and see it as code,
 so they are able to understand/execute code like

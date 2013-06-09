@@ -11,26 +11,28 @@ it's basically a rip of Ruby's RSpec in Java.
 
 So let me introduce JaySpec, which allows to describe executable tests that can be used as specification.
 In language like Scala or Groovy, the parser is enough flexible to be able to parse that text and see it as code,
-so they are able to understand/execute code like 
-  describe ArrayList
-    given an empty list
-      ArrayList<String> list = new ArrayList<>();
+so they are able to understand/execute code like
+
+    describe ArrayList
+      given an empty list
+        ArrayList<String> list = new ArrayList<>();
           
-      it should have a size == 0
-        verify that list.size() is equals to 0
+        it should have a size == 0
+          verify that list.size() is equals to 0
  
 
 In Java, even with the lambda syntax you need to add extra characters.
 Here is the equivalent code in Java 8
-  describe(ArrayList.class, it -> {
-    given("an empty list", () -> {
-      ArrayList<String> list = new ArrayList<>();
+
+    describe(ArrayList.class, it -> {
+      given("an empty list", () -> {
+        ArrayList<String> list = new ArrayList<>();
           
-      it.should("have a size == 0", verify -> {
-        verify.that(list.size()).isEqualTo(0);
+        it.should("have a size == 0", verify -> {
+          verify.that(list.size()).isEqualTo(0);
+        });
       });
     });
-  });
 
 Ok, less readable but not that bad :)
 'describe', 'given' and 'should' are methods that takes a textual description and a lambda that correspond to
@@ -46,23 +48,21 @@ which is a nice library (at least the 2.x version, I've not taken a look to the 
 I've cheated a little by saying that the code above was a Java code because I've omitted the class declaration,
 so the real executable Java code for our small example is
 
-public interface ExampleTest {
-  public static void main(String[] args) {
-    new JaySpec() {{
-
-      describe(ArrayList.class, it -> {
-        given("an empty list", () -> {
-          ArrayList<String> list = new ArrayList<>();
+    public interface ExampleTest {
+      public static void main(String[] args) {
+        new JaySpec() {{
+          describe(ArrayList.class, it -> {
+            given("an empty list", () -> {
+              ArrayList<String> list = new ArrayList<>();
           
-          it.should("have a size == 0", verify -> {
-            verify.that(list.size()).isEqualTo(0);
+              it.should("have a size == 0", verify -> {
+                verify.that(list.size()).isEqualTo(0);
+              });
+            });
           });
-        });
-      });
-
-    }}.run();
-  }
-}
+        }}.run();
+      }
+    }
 
 I use an interface instead of a class at top-level so nobody can create an instance of ExampleTest
 (you can have public static method in interface in Java 8).
@@ -73,13 +73,14 @@ What JaySpec does if to take all the tests (the one that starts with given), exe
 in a terminal (the code the execution of the tests and the output are separated so JaySpec can be embedded in any UI easily).
 
 Here is an example of run of a similar but a little more complex code (see ExampleTest.java)
-  class java.util.ArrayList
-    given a list of one element
-      it should have a size == 1
-      it should get the item at index 0
-      it should not return a valid index for a different item
-    given an empty list
-      it should have a size == 0
+
+    class java.util.ArrayList
+      given a list of one element
+        it should have a size == 1
+        it should get the item at index 0
+        it should not return a valid index for a different item
+      given an empty list
+        it should have a size == 0
 
 
 The cool thing is that JaySpec.java is one only file, containing less than 200 lines of code (with no comment).
@@ -100,6 +101,7 @@ is to use thread local variables.
 Running the examples in parallel:
 This part is really easy because JaySpec uses the new java.util.stream API,
 so the code is just:
+
     examples.parallelStream().flatMap(example -> { 
         ArrayList<R> reportList = new ArrayList<R>();
         // execute each test of the example
@@ -117,6 +119,7 @@ Gathering the reports:
 Once the reports are all created, in parallel, they need to be grouped
 first by example and then by the spec of the example,
 again this is something easy to write with the new stream API:
+
     Map<Spec, Map<Example, List<Report>>> map = ... .stream().collect(
         Collectors.groupingBy(report -> report.getExample().getSpec(),
             Collectors.groupingBy(Report::getExample)
@@ -128,6 +131,7 @@ a little more time for people to use it than the other parts of the Stream API.
 And at the end, the result of each report is printed using the newly introduced
 method Map.forEach which is far easier to use that using a for loop on an entrySet
 as we used to do before Java 8.
+
     map.forEach((spec, exampleMap) -> {
       ...
       exampleMap.forEach((example, reports) -> {

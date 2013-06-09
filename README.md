@@ -1,4 +1,5 @@
 jayspec
 =======
 
-RSpec for Java 8
+[RSpec-like for Java 8](jayspec/README.md)
+

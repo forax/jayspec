@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jayspec" default="jar">
+	  <property name="src" location="src"/>
+	  <property name="fest-assert-src" location="fest-assert-2.x/src/main/java"/>
+	  <property name="fest-util-src" location="fest-util/src/main/java"/>
+	  <property name="jsr305-src" location="jsr-305/ri/src"/>
+	  <property name="classes" location="out/classes"/>
+	  <property name="lib" location="lib"/>
+	  <property name="jayspec.jar" location="${lib}/jayspec.jar"/>
+	  
+	  <target name="clean">
+	    <delete dir="${classes}"/>
+	  	<delete dir="${jayspec.jar}"/>
+	  </target>
+	
+	  <target name="compile">
+	  	    <mkdir dir="${classes}"/>
+	        <javac srcdir="${src}:${fest-assert-src}:${fest-util-src}:${jsr305-src}"
+                 destdir="${classes}"
+	        	     includeantruntime="false"
+	        	     source="1.8"
+	        	     debug="on"
+	        	     fork="true"
+	          >
+	        	<compilerarg line="-Xlint:unchecked -Xdiags:verbose"/>
+	  	    </javac>
+	  </target>
+	
+    <target name="jar" depends="compile">
+        <jar destfile="${jayspec.jar}" basedir="${classes}">
+        </jar>
+    </target>
+</project>

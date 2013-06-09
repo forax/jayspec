@@ -1,4 +1,5 @@
 Lambdas - Welcome to the Java 2nd revolution
+============================================
 
 Java 8 will introduce (or introduces it depends if you have already played with a beta or not) a new full featured feature, lambdas.
 Instead of explaining the syntax, the semantics, how it's integrated with java.util, yada yada,
@@ -91,14 +92,16 @@ JaySpec does 3 different things, the first one is to create the tree describing 
 the second one if to run all the examples (in parallel, we have several cores on our computers now)
 and at the end, the result (the report) needs to be collected and organized by spec and by example.
 
-Creating the tree:
+Creating the tree
+-----------------
 Technically, we don't need to maintain the forward links between a spec and all the examples of the spec but
 the only the backward links from a test (the things that starts by "it should") to its example and from
 an example to its spec.
 Unlike in Ruby, there is no scope object in Java, so the standard way to emulate dynamic scope object
 is to use thread local variables.
 
-Running the examples in parallel:
+Running the examples in parallel
+--------------------------------
 This part is really easy because JaySpec uses the new java.util.stream API,
 so the code is just:
 
@@ -115,7 +118,8 @@ will use a fork-join to distribute the execution of the tests on all available c
 Note that each test for one example will be executed sequentially so JaySpec can
 test code that use objects that are not thread safe.
 
-Gathering the reports:
+Gathering the reports
+---------------------
 Once the reports are all created, in parallel, they need to be grouped
 first by example and then by the spec of the example,
 again this is something easy to write with the new stream API:

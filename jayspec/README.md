@@ -1,8 +1,11 @@
 Lambdas - Welcome to the Java 2nd revolution
 ============================================
 
-Java 8 will introduce (or introduces it depends if you have already played with a beta or not) a new full featured feature, lambdas.
-Instead of explaining the syntax, the semantics, how it's integrated with java.util, yada yada,
+Java 8 will introduce (or introduces it depends if you have already played with [the betas](https://jdk8.java.net/download.html)
+or not) a new full featured feature, lambdas.
+Instead of explaining [the syntax](http://cr.openjdk.java.net/~briangoetz/lambda/lambda-state-4.html),
+[the semantics](http://cr.openjdk.java.net/~briangoetz/lambda/lambda-state-4.html),
+how it's integrated with [java.util](http://download.java.net/jdk8/docs/api/java/util/stream/package-summary.html#package_description), yada yada,
 Let's take an example and see how lambdas can be used by users and developers of APIs.
 
 Let suppose I want to design a JUnit/TestNG replacement, basically these two libraries are designed to take an existing code
@@ -76,7 +79,7 @@ to be able to use 'describe' or 'given' as if they were functions. There are in 
 What JaySpec does if to take all the tests (the one that starts with given), execute them in parallel (using fork-join) and in this case write the results
 in a terminal (the code the execution of the tests and the output are separated so JaySpec can be embedded in any UI easily).
 
-Here is an example of run of a similar but a little more complex code (see ExampleTest.java)
+Here is an example of run of a similar but a little more complex code (see [ExampleTest.java](https://github.com/forax/jayspec/blob/master/jayspec/examples/src/ExampleTest.java))
 
     class java.util.ArrayList
       given a list of one element
@@ -89,7 +92,7 @@ Here is an example of run of a similar but a little more complex code (see Examp
 
 The cool thing is that JaySpec.java is one only file, containing less than 200 lines of code (with no comment).
 Because the is not a lot of codes that use lambda out there (at least at the time when I write this lines),
-I suppose that it a good idea to explain a little bit the code of JaySpec.java.
+I suppose that it a good idea to explain a little bit the code of [JaySpec.java](https://github.com/forax/jayspec/blob/master/jayspec/src/com/github/forax/jayspec/JaySpec.java).
 
 JaySpec does 3 different things, the first one is to create the tree describing what to execute,
 the second one if to run all the examples (in parallel, we have several cores on our computers now)
@@ -132,7 +135,8 @@ again this is something easy to write with the new stream API:
             Collectors.groupingBy(Report::getExample)
         ));
         
-The Collector API is a really powerful but complex, I guess that i will take
+The [Collector API](http://download.java.net/jdk8/docs/api/java/util/stream/Collectors.html)
+is a really powerful but complex, I guess that i will take
 a little more time for people to use it than the other parts of the Stream API.
 
 And at the end, the result of each report is printed using the newly introduced
@@ -150,5 +154,7 @@ as we used to do before Java 8.
     });
   
 The last calls to forEach can be also written using a for loop,
-but I have not yet determined in which case the lambda syntax should be used or not.
+but I have not yet determined the lambda syntax should be used or not in this case.
 
+cheers,
+Remi

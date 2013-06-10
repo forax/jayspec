@@ -154,7 +154,7 @@ as we used to do before Java 8.
     });
   
 The last calls to forEach can be also written using a for loop,
-but I have not yet determined the lambda syntax should be used or not in this case.
+but I have not yet determined if the lambda syntax should be used or not in this case.
 
 cheers,
 Remi

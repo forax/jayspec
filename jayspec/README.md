@@ -48,8 +48,8 @@ above is seen as a tree (with a node 'describe' that contains a node 'given' ...
 In term of vocabulary, for the rest of this text and for JaySpec,
 'describe' defines a spec, 'given' defines an example and 'should' defines a test.
 
-The expressions that you can use after verify.that() is the one provided by the fest-assert library
-(I don't want to re-invent the wheel here),
+The expressions that you can use after verify.that() is the one provided by the [fest-assert](https://github.com/alexruiz/fest-assert-2.x)
+library (I don't want to re-invent the wheel here),
 which is a nice library (at least the 2.x version, I've not taken a look to the older versions).
 
 I've cheated a little by saying that the code above was a Java code because I've omitted the class declaration,

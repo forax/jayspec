@@ -42,6 +42,7 @@ Here is the equivalent code in Java 8
     });
 
 Ok, less readable but not that bad :)
+
 'describe', 'given' and 'should' are methods that takes a textual description and a lambda that correspond to
 the executable part of the spec. The lambda acts as way to delay the execution of a code, so the code
 above is seen as a tree (with a node 'describe' that contains a node 'given' ...) by JaySpec.

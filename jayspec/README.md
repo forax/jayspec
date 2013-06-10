@@ -137,7 +137,7 @@ again this is something easy to write with the new stream API:
         ));
         
 The [Collector API](http://download.java.net/jdk8/docs/api/java/util/stream/Collectors.html)
-is a really powerful but complex, I guess that i will take
+is a really powerful but complex, I guess that it will take
 a little more time for people to use it than the other parts of the Stream API.
 
 And at the end, the result of each report is printed using the newly introduced

@@ -1,0 +1,6 @@
+[submodule "jayspec/fest-util"]
+	path = jayspec/fest-util
+	url = git@github.com:alexruiz/fest-util.git
+[submodule "jayspec/fest-assert-2.x"]
+	path = jayspec/fest-assert-2.x
+	url = git@github.com:alexruiz/fest-assert-2.x.git

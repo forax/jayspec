@@ -16,10 +16,7 @@ import java.util.stream.Collectors;
 public class JaySpec {
   @FunctionalInterface
   public interface Behavior {
-    public default void should(String description, Runnable action) {
-      should(description, unused -> action.run());
-    }
-    public void should(String description, Consumer<FestAssertion> assertionConsumer);
+    public void should(String description, Consumer<JayAssertion> assertionConsumer);
   }
   
   @FunctionalInterface
@@ -130,7 +127,7 @@ public class JaySpec {
   }
   
   public <R> List<R> runTest(Reporter<? extends R> reporter) {
-    FestAssertion festAssertion = new FestAssertion();
+    JayAssertion assertion = new JayAssertion();
     ThreadLocal<Example> currentExample = new ThreadLocal<>();
     ThreadLocal<List<R>> currentReportList = new ThreadLocal<>();
     Behavior behavior = (description, consumer) -> {
@@ -142,7 +139,7 @@ public class JaySpec {
       
       Throwable error;
       try {
-        consumer.accept(festAssertion);
+        consumer.accept(assertion);
         error = null;
       } catch(RuntimeException|Error e) {
         error = e;

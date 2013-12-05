@@ -52,6 +52,8 @@ In term of vocabulary, for the rest of this text and for JaySpec,
 The expressions that you can use after verify.that() is the one provided by the [fest-assert](https://github.com/alexruiz/fest-assert-2.x)
 library (I don't want to re-invent the wheel here),
 which is a nice library (at least the 2.x version, I've not taken a look to the older versions).
+[[edit: september 2013 - I've removed the dependecy to fest-assert because the source are never stable]]
+
 
 I've cheated a little by saying that the code above was a Java code because I've omitted the class declaration,
 so the real executable Java code for our small example is

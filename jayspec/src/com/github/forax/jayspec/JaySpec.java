@@ -1,19 +1,26 @@
 package com.github.forax.jayspec;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class JaySpec {
+  private long startTime = System.currentTimeMillis();
+  private int specsCounter = 0;
+  private ArrayList<String> assertionErrors = new ArrayList<>();
+
+  public JaySpec() {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      assertionErrors.forEach(System.out::println);
+
+      String exampleText = (specsCounter > 1) ? " examples, " : " example, ";
+      double endTime = ((System.currentTimeMillis() - startTime) / 1000.0);
+      System.out.println();
+      System.out.println("Finished in " + endTime + " seconds.");
+      System.out.println(specsCounter + exampleText + assertionErrors.size()  + " failed.");
+    }));
+  }
+
   @FunctionalInterface
   public interface Behavior {
     public void should(String description, Consumer<JayAssertion> assertionConsumer);
@@ -47,7 +54,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "spec of " + declaredClass;
+      return "Spec of " + declaredClass;
     }
   }
   
@@ -101,7 +108,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "report " + description + ' ' + error + " of " + example;
+      return "Report " + description + ' ' + error + " of " + example;
     }
   }
   
@@ -117,7 +124,7 @@ public class JaySpec {
   public void given(String description, Runnable action) {
     List<Example> exampleList = currentExampleList.get();
     if (exampleList == null) {
-      throw new IllegalStateException("given should be called inside a describe block");
+      throw new IllegalStateException("Given should be called inside a describe block");
     }
     exampleList.add(new Example(currentSpec.get(), description, action));
   }
@@ -127,14 +134,16 @@ public class JaySpec {
   }
   
   public <R> List<R> runTest(Reporter<? extends R> reporter) {
-    JayAssertion assertion = new JayAssertion();
+    JayAssertion assertion = new JayAssertion(assertionErrors);
     ThreadLocal<Example> currentExample = new ThreadLocal<>();
     ThreadLocal<List<R>> currentReportList = new ThreadLocal<>();
     Behavior behavior = (description, consumer) -> {
+      specsCounter++;
+
       Example example = currentExample.get();
       List<R> reportList = currentReportList.get();
       if (example == null || reportList == null) {
-        throw new IllegalStateException("should can only be called in a given block");
+        throw new IllegalStateException("Should can only be called in a given block");
       }
       
       Throwable error;

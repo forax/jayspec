@@ -108,16 +108,16 @@ public class JayAssertion {
     }
     
     public void isTrue() {
-      check(a -> a == true, "%s == true");
+      check(a -> a == true, "== true");
     }
     public void isFalse() {
-      check(a -> a == false, "%s == false");
+      check(a -> a == false, "== false");
     }
     public void isEqualTo(boolean element) {
-      check(a -> a == element, "%s == " + element);
+      check(a -> a == element, "== " + element);
     }
     public void isNotEqualsTo(boolean element) {
-      check(a -> a != element, "%s != " + element);
+      check(a -> a != element, "!= " + element);
     }
   }
   
@@ -134,25 +134,25 @@ public class JayAssertion {
     }
     
     public void isEqualTo(int element) {
-      check(a -> a == element, "%s == " + element);
+      check(a -> a == element, "== " + element);
     }
     public void isNotEqualsTo(int element) {
-      check(a -> a != element, "%s != " + element);
+      check(a -> a != element, "!= " + element);
     }
     public void isLessThan(int element) {
-      check(a -> a < element, "%s < " + element);
+      check(a -> a < element, "< " + element);
     }
     public void isLessOrEqualThan(int element) {
-      check(a -> a <= element, "%s <= " + element);
+      check(a -> a <= element, "<= " + element);
     }
     public void isGreaterThan(int element) {
-      check(a -> a > element, "%s > " + element);
+      check(a -> a > element, "> " + element);
     }
     public void isGreaterOrEqualThan(int element) {
-      check(a -> a >= element, "%s >= " + element);
+      check(a -> a >= element, ">= " + element);
     }
     public void isInRange(int first, int last) {
-      check(a -> a >= first && a <= last, "%s in [" + first + ".." + last + ']');
+      check(a -> a >= first && a <= last, "in [" + first + ".." + last + ']');
     }
   }
   
@@ -169,25 +169,25 @@ public class JayAssertion {
     }
     
     public void isEqualTo(long element) {
-      check(a -> a == element, "%s == " + element);
+      check(a -> a == element, "== " + element);
     }
     public void isNotEqualsTo(long element) {
-      check(a -> a != element, "%s != " + element);
+      check(a -> a != element, "!= " + element);
     }
     public void isLessThan(long element) {
-      check(a -> a < element, "%s < " + element);
+      check(a -> a < element, "< " + element);
     }
     public void isLessOrEqualThan(long element) {
-      check(a -> a <= element, "%s <= " + element);
+      check(a -> a <= element, "<= " + element);
     }
     public void isGreaterThan(long element) {
-      check(a -> a > element, "%s > " + element);
+      check(a -> a > element, "> " + element);
     }
     public void isGreaterOrEqualThan(long element) {
-      check(a -> a >= element, "%s >= " + element);
+      check(a -> a >= element, ">= " + element);
     }
     public void isInRange(long first, long last) {
-      check(a -> a >= first && a <= last, "%s in [" + first + ".." + last + ']');
+      check(a -> a >= first && a <= last, "in [" + first + ".." + last + ']');
     }
   }
   
@@ -209,25 +209,25 @@ public class JayAssertion {
     }
     
     public void isEqualTo(float element) {
-      check(a -> a == element, "%s == " + element);
+      check(a -> a == element, "== " + element);
     }
     public void isNotEqualsTo(float element) {
-      check(a -> a != element, "%s != " + element);
+      check(a -> a != element, "!= " + element);
     }
     public void isLessThan(float element) {
-      check(a -> a < element, "%s < " + element);
+      check(a -> a < element, "< " + element);
     }
     public void isLessOrEqualThan(float element) {
-      check(a -> a <= element, "%s <= " + element);
+      check(a -> a <= element, "<= " + element);
     }
     public void isGreaterThan(float element) {
-      check(a -> a > element, "%s > " + element);
+      check(a -> a > element, "> " + element);
     }
     public void isGreaterOrEqualThan(float element) {
-      check(a -> a >= element, "%s >= " + element);
+      check(a -> a >= element, ">= " + element);
     }
     public void isInRange(float first, float last) {
-      check(a -> a >= first && a <= last, "%s in [" + first + ".." + last + ']');
+      check(a -> a >= first && a <= last, "in [" + first + ".." + last + ']');
     }
   }
   
@@ -244,25 +244,25 @@ public class JayAssertion {
     }
     
     public void isEqualTo(double element) {
-      check(a -> a == element, "%s == " + element);
+      check(a -> a == element, "== " + element);
     }
     public void isNotEqualsTo(double element) {
-      check(a -> a != element, "%s != " + element);
+      check(a -> a != element, "!= " + element);
     }
     public void isLessThan(double element) {
-      check(a -> a < element, "%s < " + element);
+      check(a -> a < element, "< " + element);
     }
     public void isLessOrEqualThan(double element) {
-      check(a -> a <= element, "%s <= " + element);
+      check(a -> a <= element, "<= " + element);
     }
     public void isGreaterThan(double element) {
-      check(a -> a > element, "%s > " + element);
+      check(a -> a > element, "> " + element);
     }
     public void isGreaterOrEqualThan(double element) {
-      check(a -> a >= element, "%s >= " + element);
+      check(a -> a >= element, ">= " + element);
     }
     public void isInRange(double first, double last) {
-      check(a -> a >= first && a <= last, "%s in [" + first + ".." + last + ']');
+      check(a -> a >= first && a <= last, "in [" + first + ".." + last + ']');
     }
   }
   
@@ -280,7 +280,7 @@ public class JayAssertion {
   }
   
   private static <E> void checkAssertion(E actual, Predicate<? super E> predicate, String text) {
-    if (predicate.test(actual)) {
+    if (!predicate.test(actual)) {
       throw new AssertionError("Invalid assertion " + actual + ' ' + text);
     }
   }

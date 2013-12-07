@@ -7,8 +7,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class JaySpec {
-  private int specsCounter = 0;
-
   @FunctionalInterface
   public interface Behavior {
     public void should(String description, Consumer<JayAssertion> assertionConsumer);
@@ -126,8 +124,6 @@ public class JaySpec {
     ThreadLocal<Example> currentExample = new ThreadLocal<>();
     ThreadLocal<List<R>> currentReportList = new ThreadLocal<>();
     Behavior behavior = (description, consumer) -> {
-      specsCounter++;
-
       Example example = currentExample.get();
       List<R> reportList = currentReportList.get();
       if (example == null || reportList == null) {
@@ -171,6 +167,7 @@ public class JaySpec {
   
   public void run() {
     long startTime = System.currentTimeMillis();
+    int specsCounter = 0;
 
     Map<Spec, Map<Example, List<Report>>> map = runTest(Report::new).stream().collect(
         Collectors.groupingBy(report -> report.getExample().getSpec(),
@@ -179,23 +176,22 @@ public class JaySpec {
 
     double endTime = ((System.currentTimeMillis() - startTime) / 1000.0);
 
-    final ArrayList<Throwable> errors = new ArrayList<>();
+    ArrayList<Report> totalReports = new ArrayList<>();
     map.forEach((spec, exampleMap) -> {
       exampleMap.forEach((example, reports) -> {
-        reports.forEach(report -> {
-          Throwable error = report.getError();
-          if (error != null) {
-            errors.add(error);
-          }
-        });
+        totalReports.addAll(reports);
       });
     });
 
+    List<Throwable> errors = totalReports.stream()
+        .filter(r -> r.getError() != null)
+        .map(Report::getError)
+        .collect(Collectors.toList());
     errors.forEach(e -> e.printStackTrace(System.out));
 
     String exampleText = (specsCounter > 1) ? " examples, " : " example, ";
     System.out.println();
     System.out.println("Finished in " + endTime + " seconds.");
-    System.out.println(specsCounter + exampleText + errors.size()  + " failed.");
+    System.out.println(totalReports.size() + exampleText + errors.size()  + " failed.");
   }
 }

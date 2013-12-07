@@ -267,13 +267,4 @@ public class JayAssertion {
   public <E extends Comparable<E>> AssertComparable<E> that(E actual) {
     return new AssertComparable<>(actual);
   }
-  
-  /*public BooleanArrayAssert that(boolean[] actual) {
-      return Assertions.assertThat(actual);
-    }
-    public ByteArrayAssert that(byte[] actual) {
-      return Assertions.assertThat(actual);
-    } 
-    ...
-   */
 }

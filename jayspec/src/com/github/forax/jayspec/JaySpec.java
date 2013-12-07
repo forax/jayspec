@@ -1,6 +1,7 @@
 package com.github.forax.jayspec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +16,13 @@ import java.util.stream.Collectors;
 
 public class JaySpec {
   @FunctionalInterface
+  public interface AssertionConsumer {
+    public void accept(JayAssertion assertion) throws Exception;
+  }
+  
+  @FunctionalInterface
   public interface Behavior {
-    public void should(String description, Consumer<JayAssertion> assertionConsumer);
+    public void should(String description, AssertionConsumer assertionConsumer);
   }
   
   @FunctionalInterface
@@ -47,7 +53,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "spec of " + declaredClass;
+      return "Spec of " + declaredClass;
     }
   }
   
@@ -74,7 +80,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "example of " + spec.getDeclaredClass()+ ' ' + description;
+      return "Example of " + spec.getDeclaredClass()+ ' ' + description;
     }
   }
   
@@ -101,7 +107,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "report " + description + ' ' + error + " of " + example;
+      return "Report " + description + ' ' + error + " of " + example;
     }
   }
   
@@ -117,13 +123,25 @@ public class JaySpec {
   public void given(String description, Runnable action) {
     List<Example> exampleList = currentExampleList.get();
     if (exampleList == null) {
-      throw new IllegalStateException("given should be called inside a describe block");
+      throw new IllegalStateException("given() should be called inside a describe() block");
     }
     exampleList.add(new Example(currentSpec.get(), description, action));
   }
   
   public List<Spec> getSpecs() {
     return specs;
+  }
+  
+  static void stackTraceDiff(Throwable stackTrace, Throwable base) {
+    StackTraceElement[] stackElements = stackTrace.getStackTrace();
+    if (stackElements.length == 0) {  // an exception with no stack trace
+      return;
+    }
+    StackTraceElement[] baseElements = base.getStackTrace();
+    if (stackElements.length < baseElements.length) { // something goes wrong
+      return;
+    }
+    stackTrace.setStackTrace(Arrays.copyOf(stackElements, stackElements.length - baseElements.length));
   }
   
   public <R> List<R> runTest(Reporter<? extends R> reporter) {
@@ -134,14 +152,15 @@ public class JaySpec {
       Example example = currentExample.get();
       List<R> reportList = currentReportList.get();
       if (example == null || reportList == null) {
-        throw new IllegalStateException("should can only be called in a given block");
+        throw new IllegalStateException("should() can only be called in a given() block");
       }
       
       Throwable error;
       try {
         consumer.accept(assertion);
         error = null;
-      } catch(RuntimeException|Error e) {
+      } catch(Exception|AssertionError e) {
+        stackTraceDiff(e, new Throwable());
         error = e;
       }
       reportList.add(reporter.createReport(example, description, error));
@@ -158,8 +177,9 @@ public class JaySpec {
       currentExampleList.remove();
     }
     
-    return examples.parallelStream().flatMap(example -> {
-      ArrayList<R> reportList = new ArrayList<R>();
+    //FIXME remove explicit type when eclipse will work
+    return examples.parallelStream().<R>flatMap(example -> {
+      ArrayList<R> reportList = new ArrayList<>();
       currentExample.set(example);
       currentReportList.set(reportList);
       try {
@@ -169,23 +189,36 @@ public class JaySpec {
         currentExample.remove();
         currentReportList.remove();
       }
-    }).collect(Collectors.toList());
+    }).collect(Collectors.<R>toList());
   }
   
   public void run() {
-    Map<Spec, Map<Example, List<Report>>> map = runTest(Report::new).stream().collect(
+    List<Report> totalReports;
+    long startTime = System.currentTimeMillis();
+    totalReports = runTest(Report::new);
+    long endTime = System.currentTimeMillis();
+    Map<Spec, Map<Example, List<Report>>> map = totalReports.stream().collect(
         Collectors.groupingBy(report -> report.getExample().getSpec(),
-            Collectors.groupingBy(Report::getExample)
+            Collectors.<Report, Example>groupingBy(Report::getExample)
         ));
+    
+    int[] failures = new int[1];
     map.forEach((spec, exampleMap) -> {
       exampleMap.forEach((example, reports) -> {
         reports.forEach(report -> {
           Throwable error = report.getError();
           if (error != null) {
+            System.err.println(spec);
+            System.err.println("  " + example.getDescription() +
+                " fails to verify that it " + report.getDescription());
             error.printStackTrace();
+            failures[0]++;
           }
         });
       });
     });
+    
+    System.out.println("\nFinished in " + (endTime - startTime) / 1000.0 + " seconds.");
+    System.out.println("Among " + totalReports.size() + " report(s), " + failures[0]  + " failed.");
   }
 }

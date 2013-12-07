@@ -9,7 +9,7 @@ public interface ExampleTest {
         given("an empty list", () -> {
           ArrayList<String> list = new ArrayList<>();
           
-          it.should("have a size == 0", verify -> {
+          it.should("has a size == 0", verify -> {
             verify.that(list.size()).isEqualTo(0);
           });
         });
@@ -18,15 +18,15 @@ public interface ExampleTest {
           ArrayList<String> list = new ArrayList<>();
           list.add("hello");
           
-          it.should("have a size == 1", verify -> {
+          it.should("has a size == 1", verify -> {
             verify.that(list.size()).isEqualTo(1);
           });
           
-          it.should("get the item at index 0", verify -> {
+          it.should("gets the item at index 0", verify -> {
             verify.that(list.get(0)).isEqualTo("hello");
           });
           
-          it.should("not return a valid index for a different item", verify -> {
+          it.should("not returns -1 for a different item", verify -> {
             verify.that(list.indexOf("not hello")).isEqualTo(-1);
           });
         });

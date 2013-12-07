@@ -1,16 +1,9 @@
 package com.github.forax.jayspec;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class JaySpec {
@@ -47,7 +40,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "spec of " + declaredClass;
+      return "Spec of " + declaredClass;
     }
   }
   
@@ -74,7 +67,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "example of " + spec.getDeclaredClass()+ ' ' + description;
+      return "Example of " + spec.getDeclaredClass()+ ' ' + description;
     }
   }
   
@@ -101,7 +94,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "report " + description + ' ' + error + " of " + example;
+      return "Report " + description + ' ' + error + " of " + example;
     }
   }
   
@@ -117,7 +110,7 @@ public class JaySpec {
   public void given(String description, Runnable action) {
     List<Example> exampleList = currentExampleList.get();
     if (exampleList == null) {
-      throw new IllegalStateException("given should be called inside a describe block");
+      throw new IllegalStateException("Given should be called inside a describe block");
     }
     exampleList.add(new Example(currentSpec.get(), description, action));
   }
@@ -125,7 +118,7 @@ public class JaySpec {
   public List<Spec> getSpecs() {
     return specs;
   }
-  
+
   public <R> List<R> runTest(Reporter<? extends R> reporter) {
     JayAssertion assertion = new JayAssertion();
     ThreadLocal<Example> currentExample = new ThreadLocal<>();
@@ -134,7 +127,7 @@ public class JaySpec {
       Example example = currentExample.get();
       List<R> reportList = currentReportList.get();
       if (example == null || reportList == null) {
-        throw new IllegalStateException("should can only be called in a given block");
+        throw new IllegalStateException("Should can only be called in a given block");
       }
       
       Throwable error;
@@ -159,7 +152,7 @@ public class JaySpec {
     }
     
     return examples.parallelStream().flatMap(example -> {
-      ArrayList<R> reportList = new ArrayList<R>();
+      ArrayList<R> reportList = new ArrayList<>();
       currentExample.set(example);
       currentReportList.set(reportList);
       try {
@@ -173,19 +166,32 @@ public class JaySpec {
   }
   
   public void run() {
+    long startTime = System.currentTimeMillis();
+    int specsCounter = 0;
+
     Map<Spec, Map<Example, List<Report>>> map = runTest(Report::new).stream().collect(
         Collectors.groupingBy(report -> report.getExample().getSpec(),
             Collectors.groupingBy(Report::getExample)
         ));
+
+    double endTime = ((System.currentTimeMillis() - startTime) / 1000.0);
+
+    ArrayList<Report> totalReports = new ArrayList<>();
     map.forEach((spec, exampleMap) -> {
       exampleMap.forEach((example, reports) -> {
-        reports.forEach(report -> {
-          Throwable error = report.getError();
-          if (error != null) {
-            error.printStackTrace();
-          }
-        });
+        totalReports.addAll(reports);
       });
     });
+
+    List<Throwable> errors = totalReports.stream()
+        .filter(r -> r.getError() != null)
+        .map(Report::getError)
+        .collect(Collectors.toList());
+    errors.forEach(e -> e.printStackTrace(System.out));
+
+    String exampleText = (specsCounter > 1) ? " examples, " : " example, ";
+    System.out.println();
+    System.out.println("Finished in " + endTime + " seconds.");
+    System.out.println(totalReports.size() + exampleText + errors.size()  + " failed.");
   }
 }

@@ -187,11 +187,28 @@ public class JaySpec {
         .filter(r -> r.getError() != null)
         .map(Report::getError)
         .collect(Collectors.toList());
-    errors.forEach(e -> e.printStackTrace(System.out));
 
+    printErrors(errors);
+    printSummary(specsCounter, endTime, totalReports, errors);
+  }
+
+  private void printErrors(List<Throwable> errors) {
+    int counter = 1;
+    System.out.println("\n\n" + errors.size() + " failures:");
+    for (Throwable error : errors) {
+      StackTraceElement[] stackTrace = error.getStackTrace();
+      System.out.println("\n  " + counter++ + ") " + error.getMessage());
+      for (StackTraceElement element : stackTrace) {
+        if (element.getClassName().contains("java.util")) continue;
+        System.out.println("    at " + element);
+      }
+    }
+  }
+
+  private void printSummary(int specsCounter, double endTime,
+                            List<Report> totalReports, List<Throwable> errors) {
     String exampleText = (specsCounter > 1) ? " examples, " : " example, ";
-    System.out.println();
-    System.out.println("Finished in " + endTime + " seconds.");
+    System.out.println("\nFinished in " + endTime + " seconds.");
     System.out.println(totalReports.size() + exampleText + errors.size()  + " failed.");
   }
 }

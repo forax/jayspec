@@ -7,21 +7,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class JaySpec {
-  private long startTime = System.currentTimeMillis();
   private int specsCounter = 0;
-  private ArrayList<String> assertionErrors = new ArrayList<>();
-
-  public JaySpec() {
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      assertionErrors.forEach(System.out::println);
-
-      String exampleText = (specsCounter > 1) ? " examples, " : " example, ";
-      double endTime = ((System.currentTimeMillis() - startTime) / 1000.0);
-      System.out.println();
-      System.out.println("Finished in " + endTime + " seconds.");
-      System.out.println(specsCounter + exampleText + assertionErrors.size()  + " failed.");
-    }));
-  }
 
   @FunctionalInterface
   public interface Behavior {
@@ -83,7 +69,7 @@ public class JaySpec {
     
     @Override
     public String toString() {
-      return "example of " + spec.getDeclaredClass()+ ' ' + description;
+      return "Example of " + spec.getDeclaredClass()+ ' ' + description;
     }
   }
   
@@ -134,9 +120,9 @@ public class JaySpec {
   public List<Spec> getSpecs() {
     return specs;
   }
-  
+
   public <R> List<R> runTest(Reporter<? extends R> reporter) {
-    JayAssertion assertion = new JayAssertion(assertionErrors);
+    JayAssertion assertion = new JayAssertion();
     ThreadLocal<Example> currentExample = new ThreadLocal<>();
     ThreadLocal<List<R>> currentReportList = new ThreadLocal<>();
     Behavior behavior = (description, consumer) -> {
@@ -170,7 +156,7 @@ public class JaySpec {
     }
     
     return examples.parallelStream().flatMap(example -> {
-      ArrayList<R> reportList = new ArrayList<R>();
+      ArrayList<R> reportList = new ArrayList<>();
       currentExample.set(example);
       currentReportList.set(reportList);
       try {
@@ -184,19 +170,32 @@ public class JaySpec {
   }
   
   public void run() {
+    long startTime = System.currentTimeMillis();
+
     Map<Spec, Map<Example, List<Report>>> map = runTest(Report::new).stream().collect(
         Collectors.groupingBy(report -> report.getExample().getSpec(),
             Collectors.groupingBy(Report::getExample)
         ));
+
+    double endTime = ((System.currentTimeMillis() - startTime) / 1000.0);
+
+    final ArrayList<Throwable> errors = new ArrayList<>();
     map.forEach((spec, exampleMap) -> {
       exampleMap.forEach((example, reports) -> {
         reports.forEach(report -> {
           Throwable error = report.getError();
           if (error != null) {
-            error.printStackTrace();
+            errors.add(error);
           }
         });
       });
     });
+
+    errors.forEach(e -> e.printStackTrace(System.out));
+
+    String exampleText = (specsCounter > 1) ? " examples, " : " example, ";
+    System.out.println();
+    System.out.println("Finished in " + endTime + " seconds.");
+    System.out.println(specsCounter + exampleText + errors.size()  + " failed.");
   }
 }

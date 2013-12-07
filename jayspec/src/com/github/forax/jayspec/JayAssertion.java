@@ -8,12 +8,6 @@ import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
 public class JayAssertion {
-  private static List<String> assertionErrors;
-
-  public JayAssertion(List<String> assertionErrors) {
-    this.assertionErrors = assertionErrors;
-  }
-
   public static class Assert<E> {
     private final E actual;
     
@@ -23,7 +17,7 @@ public class JayAssertion {
     
     void check(Predicate<? super E> assertion, String text) {
       if (!assertion.test(actual)) {
-        assertionErrors.add("Invalid assertion: " + String.format(text, String.valueOf(actual)));
+        throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
     }
     
@@ -80,7 +74,7 @@ public class JayAssertion {
     
     private void check(BooleanPredicate assertion, String text) {
       if (!assertion.test(actual)) {
-        assertionErrors.add("Invalid assertion: " + String.format(text, String.valueOf(actual)));
+        throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
     }
     
@@ -107,7 +101,7 @@ public class JayAssertion {
     
     private void check(IntPredicate assertion, String text) {
       if (!assertion.test(actual)) {
-        assertionErrors.add("Invalid assertion: " + String.format(text, String.valueOf(actual)));
+        throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
     }
     
@@ -143,7 +137,7 @@ public class JayAssertion {
     
     private void check(LongPredicate assertion, String text) {
       if (!assertion.test(actual)) {
-        assertionErrors.add("Invalid assertion: " + String.format(text, String.valueOf(actual)));
+        throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
     }
     
@@ -184,7 +178,7 @@ public class JayAssertion {
     
     private void check(FloatPredicate assertion, String text) {
       if (!assertion.test(actual)) {
-        assertionErrors.add("invalid assertion " + String.format(text, String.valueOf(actual)));
+        throw new AssertionError("invalid assertion " + String.format(text, String.valueOf(actual)));
       }
     }
     
@@ -220,7 +214,7 @@ public class JayAssertion {
     
     private void check(DoublePredicate assertion, String text) {
       if (!assertion.test(actual)) {
-        assertionErrors.add("Invalid assertion: " + String.format(text, String.valueOf(actual)));
+        throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
     }
     

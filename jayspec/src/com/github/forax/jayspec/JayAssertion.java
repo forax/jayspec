@@ -16,9 +16,11 @@ public class JayAssertion {
     }
     
     void check(Predicate<? super E> assertion, String text) {
+      System.out.print("F");
       if (!assertion.test(actual)) {
         throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
+      System.out.print(".");
     }
     
     public void isNull() {
@@ -74,8 +76,10 @@ public class JayAssertion {
     
     private void check(BooleanPredicate assertion, String text) {
       if (!assertion.test(actual)) {
+        System.out.print("F");
         throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
+      System.out.print(".");
     }
     
     public void isTrue() {
@@ -101,8 +105,10 @@ public class JayAssertion {
     
     private void check(IntPredicate assertion, String text) {
       if (!assertion.test(actual)) {
+        System.out.print("F");
         throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
+      System.out.print(".");
     }
     
     public void isEqualTo(int element) {
@@ -137,8 +143,10 @@ public class JayAssertion {
     
     private void check(LongPredicate assertion, String text) {
       if (!assertion.test(actual)) {
+        System.out.print("F");
         throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
+      System.out.print(".");
     }
     
     public void isEqualTo(long element) {
@@ -178,8 +186,10 @@ public class JayAssertion {
     
     private void check(FloatPredicate assertion, String text) {
       if (!assertion.test(actual)) {
+        System.out.print("F");
         throw new AssertionError("invalid assertion " + String.format(text, String.valueOf(actual)));
       }
+      System.out.print(".");
     }
     
     public void isEqualTo(float element) {
@@ -214,8 +224,10 @@ public class JayAssertion {
     
     private void check(DoublePredicate assertion, String text) {
       if (!assertion.test(actual)) {
+        System.out.print("F");
         throw new AssertionError("Invalid assertion: " + String.format(text, String.valueOf(actual)));
       }
+      System.out.print(".");
     }
     
     public void isEqualTo(double element) {

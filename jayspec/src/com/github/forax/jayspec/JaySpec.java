@@ -178,11 +178,8 @@ public class JaySpec {
             Collectors.groupingBy(Report::getExample)
         ));
     map.forEach((spec, exampleMap) -> {
-      System.out.println(spec.getDeclaredClass());
       exampleMap.forEach((example, reports) -> {
-        System.out.println("  given " + example.getDescription());
         reports.forEach(report -> {
-          System.out.println("    it should " + report.getDescription());
           Throwable error = report.getError();
           if (error != null) {
             error.printStackTrace();

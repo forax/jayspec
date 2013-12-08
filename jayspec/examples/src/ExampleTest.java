@@ -43,7 +43,7 @@ public interface ExampleTest {
             verify.that(set).last().isEqualTo("hello");
           });
           it.should("first element is less than zzzzz", verify -> {
-            verify.that(set).first().isGreaterThan("zzzzz");
+            verify.that(set).first().isLessThan("zzzzz");
           });
         });
       });

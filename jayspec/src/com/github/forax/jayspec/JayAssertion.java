@@ -42,16 +42,16 @@ public class JayAssertion {
     public void isNotNull() {
       check(a -> a != null, "%s != null");
     }
-    public void isSameAs(E element) {
+    public void isSameAs(Object element) {
       check(a -> a == element, "%s == " + element);
     }
-    public void isNotSameAs(E element) {
+    public void isNotSameAs(Object element) {
       check(a -> a != element, "%s != " + element);
     }
-    public void isEqualTo(E element) {
+    public void isEqualTo(Object element) {
       check(a -> Objects.equals(a, element), "%s equals " + element);
     }
-    public void isNotEqualTo(E element) {
+    public void isNotEqualTo(Object element) {
       check(a -> !Objects.equals(a, element), "%s not equals " + element);
     }
   }
@@ -130,7 +130,7 @@ public class JayAssertion {
     public void contains(Object o) {
       check(a -> a.contains(o), "%s contains " + o);
     }
-    public void containsAll(Object... objects) {
+    public final void containsAll(Object... objects) {
       containsAll(Arrays.asList(objects));
     }
     public void containsAll(Collection<?> objects) {
@@ -475,6 +475,7 @@ public class JayAssertion {
   }
   
   //FIXME, we only support navigable set with elements that are comparable due to erasure
+  // otherwise, it will be typed as a set
   public <T extends Comparable<? super T>, E extends NavigableSet<T>> AssertNavigableSet<T,E,AssertComparable<T>> that(E actual) {
     return new AssertNavigableSet<>(actual, checker, AssertComparable<T>::new);
   }
@@ -484,6 +485,7 @@ public class JayAssertion {
   }
   
   //FIXME, we only support navigable map with keys that are comparable due to erasure
+  // otherwise, it will be typed as a map
   public <K extends Comparable<? super K>, V, E extends NavigableMap<K,V>> AssertMap<K,V,E,AssertComparable<K>, AssertNavigableSet<K,NavigableSet<K>,AssertComparable<K>>> that(E actual) {
     return new AssertMap<>(actual, checker, (map, __) -> new AssertNavigableSet<>(map.navigableKeySet(), __, AssertComparable<K>::new));
   }

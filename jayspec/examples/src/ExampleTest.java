@@ -22,11 +22,9 @@ public interface ExampleTest {
           it.should("has a size == 1", verify -> {
             verify.that(list).size().isEqualTo(1);
           });
-          
           it.should("gets the item at index 0", verify -> {
             verify.that(list).get(0).isEqualTo("hello");
           });
-          
           it.should("not returns -1 as an index of an item not present", verify -> {
             verify.that(list).indexOf("not hello").isEqualTo(-1);
           });
@@ -44,8 +42,13 @@ public interface ExampleTest {
           it.should("last is the element", verify -> {
             verify.that(set).last().isEqualTo("hello");
           });
+          it.should("first element is less than zzzzz", verify -> {
+            verify.that(set).first().isGreaterThan("zzzzz");
+          });
         });
       });
+      
+      
     }}.run();
   }
 

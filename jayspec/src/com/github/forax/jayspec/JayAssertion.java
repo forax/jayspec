@@ -1,10 +1,15 @@
 package com.github.forax.jayspec;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.DoublePredicate;
 import java.util.function.IntPredicate;
 import java.util.function.LongPredicate;
@@ -73,9 +78,40 @@ public class JayAssertion {
     }
   }
   
-  public static class AssertCollection<T, E extends Collection<T>> extends Assert<E> {
-    AssertCollection(E actual, Checker checker) {
+  public static class AssertEntry<K, V, E extends Map.Entry<K, V>> extends Assert<E> {
+    AssertEntry(E actual, Checker checker) {
       super(actual, checker);
+    }
+    
+    private <T> void checkKey(T actual, Predicate<? super T> predicate, String text) {
+      check(a -> predicate.test(actual), "key of " + text);
+    }
+    private <T> void checkValue(T actual, Predicate<? super T> predicate, String text) {
+      check(a -> predicate.test(actual), "value of " + text);
+    }
+    
+    public void isEqualTo(K key, V value) {
+      SimpleImmutableEntry<K, V> entry = new SimpleImmutableEntry<>(key, value);
+      check(a -> Objects.equals(a, entry), "%s equals " + entry);
+    }
+    public void isNotEqualTo(K key, V value) {
+      SimpleImmutableEntry<K, V> entry = new SimpleImmutableEntry<>(key, value);
+      check(a -> !Objects.equals(a, entry), "%s not equals " + entry);
+    }
+    public Assert<K> key() {
+      return new Assert<>(actual.getKey(), this::checkKey);
+    }
+    public Assert<V> value() {
+      return new Assert<>(actual.getValue(), this::checkValue);
+    }
+  }
+  
+  public static class AssertCollection<T, E extends Collection<T>, A extends Assert<T>> extends Assert<E> {
+    final BiFunction<? super T, Checker, ? extends A> elementMapper;
+    
+    AssertCollection(E actual, Checker checker, BiFunction<? super T, Checker, ? extends A> mapper) {
+      super(actual, checker);
+      this.elementMapper = mapper;
     }
     
     private <V> void checkSize(V actual, Predicate<? super V> predicate, String text) {
@@ -100,14 +136,14 @@ public class JayAssertion {
     public void containsAll(Collection<?> objects) {
       check(a -> a.containsAll(objects), "%s contains all" + objects);
     }
-    public Assert<T> first() {
-      return new Assert<>(actual.iterator().next(), this::checkFirst);
+    public A first() {
+      return elementMapper.apply(actual.iterator().next(), this::checkFirst);
     }
   }
   
-  public static class AssertList<T, E extends List<T>> extends AssertCollection<T, E> {
-    AssertList(E actual, Checker checker) {
-      super(actual, checker);
+  public static class AssertList<T, E extends List<T>, A extends Assert<T>> extends AssertCollection<T, E, A> {
+    AssertList(E actual, Checker checker, BiFunction<? super T, Checker, ? extends A> elementMapper) {
+      super(actual, checker, elementMapper);
     }
     
     private <V> void checkIndexOf(V actual, Predicate<? super V> predicate, String text) {
@@ -123,8 +159,8 @@ public class JayAssertion {
       check(a -> predicate.test(actual), "last of " + text);
     }
     
-    public Assert<T> get(int index) {
-      return new Assert<>(actual.get(index), this::checkGet);
+    public A get(int index) {
+      return elementMapper.apply(actual.get(index), this::checkGet);
     }
     public AssertInt indexOf(Object object) {
       return new AssertInt(actual.indexOf(object), this::checkIndexOf);
@@ -132,14 +168,14 @@ public class JayAssertion {
     public AssertInt lastIndexOf(Object object) {
       return new AssertInt(actual.indexOf(object), this::checkLastIndexOf);
     }
-    public Assert<T> last() {
-      return new Assert<>(actual.listIterator(actual.size()).previous(), this::checkLast);
+    public A last() {
+      return elementMapper.apply(actual.listIterator(actual.size()).previous(), this::checkLast);
     }
   }
   
-  public static class AssertNavigableSet<T, E extends NavigableSet<T>> extends AssertCollection<T, E> {
-    AssertNavigableSet(E actual, Checker checker) {
-      super(actual, checker);
+  public static class AssertNavigableSet<T, E extends NavigableSet<T>, A extends Assert<T>> extends AssertCollection<T, E, A> {
+    AssertNavigableSet(E actual, Checker checker, BiFunction<? super T, Checker, ? extends A> elementMapper) {
+      super(actual, checker, elementMapper);
     }
     
     private <V> void checkFirst(V actual, Predicate<? super V> predicate, String text) {
@@ -150,11 +186,52 @@ public class JayAssertion {
     }
     
     @Override
-    public Assert<T> first() {
-      return new Assert<>(actual.first(), this::checkFirst);
+    public A first() {
+      return elementMapper.apply(actual.first(), this::checkFirst);
     }
-    public Assert<T> last() {
-      return new Assert<>(actual.last(), this::checkLast);
+    public A last() {
+      return elementMapper.apply(actual.last(), this::checkLast);
+    }
+  }
+  
+  public static class AssertMap<K, V, E extends Map<K,V>, A extends Assert<K>, C extends AssertCollection<K, ? extends Set<K>, A>> extends Assert<E> {
+    final BiFunction<E, Checker, C> keySetMapper;
+    
+    AssertMap(E actual, Checker checker, BiFunction<E, Checker, C> keySetMapper) {
+      super(actual, checker);
+      this.keySetMapper = keySetMapper;
+    }
+    
+    private <T> void checkSize(T actual, Predicate<? super T> predicate, String text) {
+      check(a -> predicate.test(actual), "size of " + text);
+    }
+    private <T> void checkKeySet(T actual, Predicate<? super T> predicate, String text) {
+      check(a -> predicate.test(actual), "keys of " + text);
+    }
+    private <T> void checkValues(T actual, Predicate<? super T> predicate, String text) {
+      check(a -> predicate.test(actual), "values of " + text);
+    }
+    private <T> void checkEntrySet(T actual, Predicate<? super T> predicate, String text) {
+      check(a -> predicate.test(actual), "entries of " + text);
+    }
+    
+    public void isEmpty() {
+      check(a -> a.isEmpty(), "%s is empty");
+    }
+    public AssertInt size() {
+      return new AssertInt(actual.size(), this::checkSize);
+    }
+    public void containsKey(Object o) {
+      check(a -> a.containsKey(o), "%s contains " + o);
+    }
+    public C keySet() {
+      return keySetMapper.apply(actual, this::checkKeySet);
+    }
+    public AssertCollection<V, Collection<V>, Assert<V>> values() {
+      return new AssertCollection<>(actual.values(), this::checkValues, Assert<V>::new);
+    }
+    public AssertCollection<Map.Entry<K, V>, Set<Map.Entry<K,V>>, AssertEntry<K,V, Map.Entry<K, V>>> entrySet() {
+      return new AssertCollection<>(actual.entrySet(), this::checkEntrySet, AssertEntry<K,V, Map.Entry<K, V>>::new);
     }
   }
   
@@ -381,15 +458,33 @@ public class JayAssertion {
     return new AssertComparable<>(actual, checker);
   }
   
-  public <T, E extends Collection<T>> AssertCollection<T, E> that(E actual) {
-    return new AssertCollection<>(actual, checker);
+  public <K, V, E extends Map.Entry<K, V>> AssertEntry<K, V, E> that(E actual) {
+    return new AssertEntry<>(actual, checker);
   }
   
-  public <T, E extends List<T>> AssertList<T, E> that(E actual) {
-    return new AssertList<>(actual, checker);
+  public <T, E extends Collection<T>> AssertCollection<T, E, Assert<T>> that(E actual) {
+    return new AssertCollection<>(actual, checker, Assert<T>::new);
   }
   
-  public <T, E extends NavigableSet<T>> AssertNavigableSet<T, E> that(E actual) {
-    return new AssertNavigableSet<>(actual, checker);
+  public <T extends Comparable<? super T>, E extends Set<T>> AssertCollection<T, E, AssertComparable<T>> that(E actual) {
+    return new AssertCollection<>(actual, checker, AssertComparable<T>::new);
+  }
+  
+  public <T, E extends List<T>> AssertList<T, E, Assert<T>> that(E actual) {
+    return new AssertList<>(actual, checker, Assert<T>::new);
+  }
+  
+  //FIXME, we only support navigable set with elements that are comparable due to erasure
+  public <T extends Comparable<? super T>, E extends NavigableSet<T>> AssertNavigableSet<T,E,AssertComparable<T>> that(E actual) {
+    return new AssertNavigableSet<>(actual, checker, AssertComparable<T>::new);
+  }
+  
+  public <K, V, E extends Map<K,V>> AssertMap<K,V,E,Assert<K>,AssertCollection<K,Set<K>,Assert<K>>> that(E actual) {
+    return new AssertMap<>(actual, checker, (map, __) -> new AssertCollection<>(map.keySet(), __, Assert<K>::new));
+  }
+  
+  //FIXME, we only support navigable map with keys that are comparable due to erasure
+  public <K extends Comparable<? super K>, V, E extends NavigableMap<K,V>> AssertMap<K,V,E,AssertComparable<K>, AssertNavigableSet<K,NavigableSet<K>,AssertComparable<K>>> that(E actual) {
+    return new AssertMap<>(actual, checker, (map, __) -> new AssertNavigableSet<>(map.navigableKeySet(), __, AssertComparable<K>::new));
   }
 }

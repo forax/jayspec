@@ -210,7 +210,7 @@ public class JaySpec {
           if (error != null) {
             System.err.println(spec);
             System.err.println("  " + example.getDescription() +
-                " fails to verify that it " + report.getDescription());
+                " fails to verify: " + report.getDescription());
             error.printStackTrace();
             failures[0]++;
           }

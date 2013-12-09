@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 import com.github.forax.jayspec.JaySpec;
+import com.github.forax.jayspec.JayAssertion.Assert.ToBooleanFunction;
 
 public interface ExampleTest {
   public static void main(String[] args) {
@@ -48,6 +49,15 @@ public interface ExampleTest {
         });
       });
       
+      describe(String.class, it -> {
+        String s = "";
+        
+        given("an empty string", () -> {
+          it.should("isEmpty is true", verify -> {
+            verify.that(s).getBoolean(String::isEmpty).isTrue();
+          });
+        });
+      });
       
     }}.run();
   }

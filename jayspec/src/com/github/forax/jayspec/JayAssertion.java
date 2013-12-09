@@ -1,8 +1,14 @@
 package com.github.forax.jayspec;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -11,9 +17,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.DoublePredicate;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class JayAssertion {
   static class AbstractAssert {
@@ -32,8 +40,26 @@ public class JayAssertion {
       this.actual = actual;
     }
     
+    void check(Predicate<? super E> assertion, Supplier<String> textSupplier){
+      checker.check(actual, assertion, textSupplier);
+    }
     void check(Predicate<? super E> assertion, String text){
-      checker.check(actual, assertion, text);
+      check(assertion, () -> text);
+    }
+    
+    
+    
+    Checker delegateChecker(Function<String,String> function) {
+      class DelegateChecker {
+        DelegateChecker() {
+          // not public
+        }
+        <T> void delegate(T actual, Predicate<? super T> predicate, Supplier<String> text) {
+          check(a -> predicate.test(actual), () -> function.apply(text.get()));
+        }
+      }
+      
+      return new DelegateChecker()::delegate;
     }
     
     public void isNull() {
@@ -53,6 +79,39 @@ public class JayAssertion {
     }
     public void isNotEqualTo(Object element) {
       check(a -> !Objects.equals(a, element), "%s not equals " + element);
+    }
+    
+    @FunctionalInterface
+    public interface ToObjectFunction<T, R> extends Serializable { R applyAsObject(T t); }
+    @FunctionalInterface
+    public interface ToBooleanFunction<T> extends Serializable { boolean applyAsBoolean(T t); }
+    @FunctionalInterface
+    public interface ToIntFunction<T> extends Serializable { int applyAsInt(T t); }
+    @FunctionalInterface
+    public interface ToLongFunction<T> extends Serializable { long applyAsLong(T t); }
+    @FunctionalInterface
+    public interface ToFloatFunction<T> extends Serializable { float applyAsFloat(T t); }
+    @FunctionalInterface
+    public interface ToDoubleFunction<T> extends Serializable { double applyAsDouble(T t); }
+    
+    public <R> Assert<R> get(ToObjectFunction<? super E, ? extends R> mapper) {
+      //FIXME use diamond when Eclipse will support it
+      return new Assert<R>(mapper.applyAsObject(actual), delegateChecker(s -> asMethodName(s, mapper)));
+    }
+    public AssertBoolean getBoolean(ToBooleanFunction<? super E> mapper) {
+      return new AssertBoolean(mapper.applyAsBoolean(actual), delegateChecker(s -> asMethodName(s, mapper)));
+    }
+    public AssertInt getInt(ToIntFunction<? super E> mapper) {
+      return new AssertInt(mapper.applyAsInt(actual), delegateChecker(s -> asMethodName(s, mapper)));
+    }
+    public AssertLong getInt(ToLongFunction<? super E> mapper) {
+      return new AssertLong(mapper.applyAsLong(actual), delegateChecker(s -> asMethodName(s, mapper)));
+    }
+    public AssertFloat getFloat(ToFloatFunction<? super E> mapper) {
+      return new AssertFloat(mapper.applyAsFloat(actual), delegateChecker(s -> asMethodName(s, mapper)));
+    }
+    public AssertDouble getDouble(ToDoubleFunction<? super E> mapper) {
+      return new AssertDouble(mapper.applyAsDouble(actual), delegateChecker(s -> asMethodName(s, mapper)));
     }
   }
   
@@ -83,13 +142,6 @@ public class JayAssertion {
       super(actual, checker);
     }
     
-    private <T> void checkKey(T actual, Predicate<? super T> predicate, String text) {
-      check(a -> predicate.test(actual), "key of " + text);
-    }
-    private <T> void checkValue(T actual, Predicate<? super T> predicate, String text) {
-      check(a -> predicate.test(actual), "value of " + text);
-    }
-    
     public void isEqualTo(K key, V value) {
       SimpleImmutableEntry<K, V> entry = new SimpleImmutableEntry<>(key, value);
       check(a -> Objects.equals(a, entry), "%s equals " + entry);
@@ -99,10 +151,10 @@ public class JayAssertion {
       check(a -> !Objects.equals(a, entry), "%s not equals " + entry);
     }
     public Assert<K> key() {
-      return new Assert<>(actual.getKey(), this::checkKey);
+      return new Assert<>(actual.getKey(), delegateChecker(s -> "key of " + s));
     }
     public Assert<V> value() {
-      return new Assert<>(actual.getValue(), this::checkValue);
+      return new Assert<>(actual.getValue(), delegateChecker(s -> "value of " + s));
     }
   }
   
@@ -114,18 +166,11 @@ public class JayAssertion {
       this.elementMapper = mapper;
     }
     
-    private <V> void checkSize(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "size of " + text);
-    }
-    private <V> void checkFirst(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "first of " + text);
-    }
-    
     public void isEmpty() {
       check(a -> a.isEmpty(), "%s is empty");
     }
     public AssertInt size() {
-      return new AssertInt(actual.size(), this::checkSize);
+      return new AssertInt(actual.size(), delegateChecker(s -> "size of " + s));
     }
     public void contains(Object o) {
       check(a -> a.contains(o), "%s contains " + o);
@@ -137,7 +182,7 @@ public class JayAssertion {
       check(a -> a.containsAll(objects), "%s contains all" + objects);
     }
     public A first() {
-      return elementMapper.apply(actual.iterator().next(), this::checkFirst);
+      return elementMapper.apply(actual.iterator().next(), delegateChecker(s -> "first of " + s));
     }
   }
   
@@ -146,30 +191,17 @@ public class JayAssertion {
       super(actual, checker, elementMapper);
     }
     
-    private <V> void checkIndexOf(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "index of " + text);
-    }
-    private <V> void checkLastIndexOf(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "last index of " + text);
-    }
-    private <V> void checkGet(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "get object at " + text);
-    }
-    private <V> void checkLast(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "last of " + text);
-    }
-    
     public A get(int index) {
-      return elementMapper.apply(actual.get(index), this::checkGet);
+      return elementMapper.apply(actual.get(index), delegateChecker(s -> "get object at " + s));
     }
     public AssertInt indexOf(Object object) {
-      return new AssertInt(actual.indexOf(object), this::checkIndexOf);
+      return new AssertInt(actual.indexOf(object), delegateChecker(s -> "index of " + s));
     }
     public AssertInt lastIndexOf(Object object) {
-      return new AssertInt(actual.indexOf(object), this::checkLastIndexOf);
+      return new AssertInt(actual.indexOf(object), delegateChecker(s -> "last index of " + s));
     }
     public A last() {
-      return elementMapper.apply(actual.listIterator(actual.size()).previous(), this::checkLast);
+      return elementMapper.apply(actual.listIterator(actual.size()).previous(), delegateChecker(s -> "last " + s));
     }
   }
   
@@ -178,19 +210,12 @@ public class JayAssertion {
       super(actual, checker, elementMapper);
     }
     
-    private <V> void checkFirst(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "first of " + text);
-    }
-    private <V> void checkLast(V actual, Predicate<? super V> predicate, String text) {
-      check(a -> predicate.test(actual), "last of " + text);
-    }
-    
     @Override
     public A first() {
-      return elementMapper.apply(actual.first(), this::checkFirst);
+      return elementMapper.apply(actual.first(), delegateChecker(s -> "first of " + s));
     }
     public A last() {
-      return elementMapper.apply(actual.last(), this::checkLast);
+      return elementMapper.apply(actual.last(), delegateChecker(s -> "last of " + s));
     }
   }
   
@@ -202,36 +227,23 @@ public class JayAssertion {
       this.keySetMapper = keySetMapper;
     }
     
-    private <T> void checkSize(T actual, Predicate<? super T> predicate, String text) {
-      check(a -> predicate.test(actual), "size of " + text);
-    }
-    private <T> void checkKeySet(T actual, Predicate<? super T> predicate, String text) {
-      check(a -> predicate.test(actual), "keys of " + text);
-    }
-    private <T> void checkValues(T actual, Predicate<? super T> predicate, String text) {
-      check(a -> predicate.test(actual), "values of " + text);
-    }
-    private <T> void checkEntrySet(T actual, Predicate<? super T> predicate, String text) {
-      check(a -> predicate.test(actual), "entries of " + text);
-    }
-    
     public void isEmpty() {
       check(a -> a.isEmpty(), "%s is empty");
     }
     public AssertInt size() {
-      return new AssertInt(actual.size(), this::checkSize);
+      return new AssertInt(actual.size(), delegateChecker(s -> "size of " + s));
     }
     public void containsKey(Object o) {
       check(a -> a.containsKey(o), "%s contains " + o);
     }
     public C keySet() {
-      return keySetMapper.apply(actual, this::checkKeySet);
+      return keySetMapper.apply(actual, delegateChecker(s -> "keys of " + s));
     }
     public AssertCollection<V, Collection<V>, Assert<V>> values() {
-      return new AssertCollection<>(actual.values(), this::checkValues, Assert<V>::new);
+      return new AssertCollection<>(actual.values(), delegateChecker(s -> "values of " + s), Assert<V>::new);
     }
     public AssertCollection<Map.Entry<K, V>, Set<Map.Entry<K,V>>, AssertEntry<K,V, Map.Entry<K, V>>> entrySet() {
-      return new AssertCollection<>(actual.entrySet(), this::checkEntrySet, AssertEntry<K,V, Map.Entry<K, V>>::new);
+      return new AssertCollection<>(actual.entrySet(), delegateChecker(s -> "entries of " + s), AssertEntry<K,V, Map.Entry<K, V>>::new);
     }
   }
   
@@ -244,12 +256,10 @@ public class JayAssertion {
     }
     
     @FunctionalInterface
-    interface BooleanPredicate {
-      boolean test(boolean t);
-    }
+    interface BooleanPredicate { boolean test(boolean t); }
     
     private void check(BooleanPredicate predicate, String text){
-      checker.check(actual, predicate::test, text);
+      checker.check(actual, predicate::test, () -> text);
     }
     
     public void isTrue() {
@@ -275,7 +285,7 @@ public class JayAssertion {
     }
     
     private void check(IntPredicate predicate, String text){
-      checker.check(actual, predicate::test, text);
+      checker.check(actual, predicate::test, () -> text);
     }
     
     public void isEqualTo(int element) {
@@ -310,7 +320,7 @@ public class JayAssertion {
     }
     
     private void check(LongPredicate predicate, String text){
-      checker.check(actual, predicate::test, text);
+      checker.check(actual, predicate::test, () -> text);
     }
     
     public void isEqualTo(long element) {
@@ -345,12 +355,10 @@ public class JayAssertion {
     }
     
     @FunctionalInterface
-    interface FloatPredicate {
-      boolean test(float t);
-    }
+    interface FloatPredicate { boolean test(float t); }
     
     private void check(FloatPredicate predicate, String text){
-      checker.check(actual, predicate::test, text);
+      checker.check(actual, predicate::test, () -> text);
     }
     
     public void isEqualTo(float element) {
@@ -385,7 +393,7 @@ public class JayAssertion {
     }
     
     private void check(DoublePredicate predicate, String text){
-      checker.check(actual, predicate::test, text);
+      checker.check(actual, predicate::test, () -> text);
     }
     
     public void isEqualTo(double element) {
@@ -411,8 +419,9 @@ public class JayAssertion {
     }
   }
   
+  @FunctionalInterface
   public interface Checker {
-    <E> void check(E actual, Predicate<? super E> assertion, String text);
+    <E> void check(E actual, Predicate<? super E> predicate, Supplier<String> textSupplier);
   }
   
   private final Checker checker;
@@ -424,9 +433,26 @@ public class JayAssertion {
     this(JayAssertion::checkAssertion);
   }
   
-  private static <E> void checkAssertion(E actual, Predicate<? super E> predicate, String text) {
+  static String asMethodName(String text, Serializable lambda) {
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    ObjectOutputStream output;
+    try {
+      output = new ObjectOutputStream(stream);
+      output.writeObject(lambda);
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+    
+    ByteBuffer buffer = ByteBuffer.wrap(stream.toByteArray());
+    @SuppressWarnings("unchecked")
+    HashMap<String, Object> map = (HashMap<String, Object>)new SerializationDecoder().decode(buffer);
+    String format = "%s" + '.' + (String)map.get("implMethodName") + (String)map.get("implMethodSignature");
+    return text.replace("%s", format);
+  }
+  
+  private static <E> void checkAssertion(E actual, Predicate<? super E> predicate, Supplier<String> textSupplier) {
     if (!predicate.test(actual)) {
-      throw new AssertionError("Invalid assertion, " + String.format(text, actual));
+      throw new AssertionError("Invalid assertion, " + String.format(textSupplier.get(), actual));
     }
   }
   
